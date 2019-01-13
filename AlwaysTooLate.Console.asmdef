@@ -1,0 +1,16 @@
+{
+    "name": "AlwaysTooLate.Console",
+    "references": [
+        "AlwaysTooLate.Core",
+        "AlwaysTooLate.CVars",
+        "AlwaysTooLate.Commands"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
