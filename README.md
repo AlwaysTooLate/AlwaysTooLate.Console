@@ -1,4 +1,4 @@
-# AlwaysTooLate.Core
+# AlwaysTooLate.Console
 AlwaysTooLate runtime console module.
 
 TODO: Examples
