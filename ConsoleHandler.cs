@@ -37,6 +37,7 @@ namespace AlwaysTooLate.Console
         {
             // Dispose the GameObject pool
             _textPool.Dispose();
+            _textPool = null;
         }
         
         public void Open()
@@ -133,6 +134,9 @@ namespace AlwaysTooLate.Console
 
         public void AddLine(string text, Color color)
         {
+            if (_textPool == null)
+                return;
+
             // Release old children to maintain the desired message count
             while(Content.childCount >= ConsoleManager.Instance.MaxMessages)
                 _textPool.Release(Content.GetChild(0).gameObject);

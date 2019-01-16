@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AlwaysTooLate.Commands;
 using AlwaysTooLate.Core;
+using AlwaysTooLate.CVars;
 using UnityEngine;
 
 namespace AlwaysTooLate.Console
@@ -17,19 +18,29 @@ namespace AlwaysTooLate.Console
     {
         public const string ConsolePrefabName = "AlwaysTooLate.Console";
 
-        public int MaxMessages = 256;
-
         private readonly List<string> _previousCommands = new List<string>(32);
         private readonly List<string> _highlights = new List<string>(32);
-
-        [SerializeField]
+        
         private int _commandCursor;
-
         private GameObject _console;
         private ConsoleHandler _handler;
 
-        private bool _consoleOpen;
+        /// <summary>
+        /// The maximal number of messages that can be shown in the console.
+        /// When console message count exceeds this number, the oldest logs
+        /// will be removed.
+        /// </summary>
+        [Tooltip("The maximal number of messages that can be shown in the console. " +
+                 "When console message count exceeds this number, " +
+                 "the oldest logs will be removed.")]
+        public int MaxMessages = 256;
         
+        /// <summary>
+        /// The key that opens the console window.
+        /// </summary>
+        [Tooltip("The key that opens the console window.")]
+        public KeyCode OpenConsoleKey = KeyCode.BackQuote;
+
         protected override void OnAwake()
         {
             // Load and spawn Console canvas
@@ -49,11 +60,11 @@ namespace AlwaysTooLate.Console
 
         protected void Update()
         {
-            if (Input.GetKeyDown(KeyCode.BackQuote))
+            if (Input.GetKeyDown(OpenConsoleKey))
             {
-                _consoleOpen = !_consoleOpen;
+                IsConsoleOpen = !IsConsoleOpen;
 
-                if (_consoleOpen)
+                if (IsConsoleOpen)
                 {
                     _handler.Open();
                 }
@@ -63,7 +74,7 @@ namespace AlwaysTooLate.Console
                 }
             }
 
-            if (_consoleOpen && _handler.IsEnteringCommand)
+            if (IsConsoleOpen && _handler.IsEnteringCommand)
             {
                 // Get previous/next command through Up/Down arrows
                 if (Input.GetKeyDown(KeyCode.UpArrow))
@@ -163,20 +174,37 @@ namespace AlwaysTooLate.Console
 
         public void OnCommandUpdate(string command)
         {
-            var commands = CommandManager.GetCommands();
-
             _highlights.Clear();
 
+            if (command.Length == 0)
+                return;
+
+            var commands = CommandManager.GetCommands();
+            var variables = CVarManager.Instance.AllVariables;
+            
             foreach (var cmd in commands)
             {
-                if (cmd.Name.Contains(command))
-                {
-                    _highlights.Add(cmd.Name);
+                if (!cmd.Name.Contains(command))
+                    continue;
 
-                    if (_highlights.Count == 32)
-                        break;
-                }
+                _highlights.Add(cmd.Name);
+
+                if (_highlights.Count == 32)
+                    break;
             }
+
+            foreach (var var in variables)
+            {
+                if (!var.Key.Contains(command))
+                    continue;
+
+                _highlights.Add(var.Key);
+
+                if (_highlights.Count == 32)
+                    break;
+            }
+
+            _highlights.Sort();
 
             _handler.SetHighlights(_highlights.ToArray(), command);
         }
@@ -207,5 +235,6 @@ namespace AlwaysTooLate.Console
         }
 
         public bool IsSelectingHighlight => _commandCursor >= _previousCommands.Count;
+        public bool IsConsoleOpen { get; private set; }
     }
 }
