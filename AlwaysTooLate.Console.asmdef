@@ -3,7 +3,8 @@
     "references": [
         "AlwaysTooLate.Core",
         "AlwaysTooLate.CVars",
-        "AlwaysTooLate.Commands"
+        "AlwaysTooLate.Commands",
+        "Unity.TextMeshPro"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

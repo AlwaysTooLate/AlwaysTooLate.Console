@@ -1,0 +1,15 @@
+{
+    "name": "AlwaysTooLate.Console", 
+    "unity": "2018.3", 
+    "version": "1.0.0-preview", 
+    "dependencies": {
+		"com.unity.textmeshpro": "1.3.0",
+        "AlwaysTooLate.Core": "1.0",
+        "AlwaysTooLate.CVars": "1.0",
+        "AlwaysTooLate.Commands": "1.0"
+    }, 
+    "keywords": [
+        "AlwaysTooLate"
+    ], 
+    "description": "AlwaysTooLate runtime console module"
+}
