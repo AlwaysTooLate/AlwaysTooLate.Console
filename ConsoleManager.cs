@@ -62,16 +62,7 @@ namespace AlwaysTooLate.Console
         {
             if (Input.GetKeyDown(OpenConsoleKey))
             {
-                IsConsoleOpen = !IsConsoleOpen;
-
-                if (IsConsoleOpen)
-                {
-                    _handler.Open();
-                }
-                else
-                {
-                    _handler.Close();
-                }
+                SetConsoleActive(!IsConsoleOpen);
             }
 
             if (IsConsoleOpen && _handler.IsEnteringCommand)
@@ -232,6 +223,23 @@ namespace AlwaysTooLate.Console
 
             _handler.SetHighlights(null);
             _highlights.Clear();
+        }
+
+        /// <summary>
+        /// Sets console active state.
+        /// </summary>
+        public void SetConsoleActive(bool activeState)
+        {
+            IsConsoleOpen = activeState;
+
+            if (IsConsoleOpen)
+            {
+                _handler.Open();
+            }
+            else
+            {
+                _handler.Close();
+            }
         }
 
         public bool IsSelectingHighlight => _commandCursor >= _previousCommands.Count;
