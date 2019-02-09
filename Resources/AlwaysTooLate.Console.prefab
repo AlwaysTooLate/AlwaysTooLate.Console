@@ -164,8 +164,8 @@ Animation:
   serializedVersion: 3
   m_Animation: {fileID: 0}
   m_Animations:
-  - {fileID: 7400000, guid: 437ea4ab37c3369489a412f7fe207ce1, type: 2}
   - {fileID: 7400000, guid: d4e50af24a225184e83894f3180c23c0, type: 2}
+  - {fileID: 7400000, guid: 437ea4ab37c3369489a412f7fe207ce1, type: 2}
   m_WrapMode: 0
   m_PlayAutomatically: 0
   m_AnimatePhysics: 0
@@ -256,9 +256,8 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: "\u200B"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: a4027fab7f549684981fcc08a809641c, type: 2}
-  m_sharedMaterial: {fileID: 21471327672164268, guid: a4027fab7f549684981fcc08a809641c,
-    type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
