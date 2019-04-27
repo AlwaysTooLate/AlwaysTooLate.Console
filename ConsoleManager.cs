@@ -130,6 +130,25 @@ namespace AlwaysTooLate.Console
             _handler.AddLine(condition, color);
         }
 
+        /// <summary>
+        ///     Writes given text to the console window.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        public void Write(string text)
+        {
+            _handler.AddLine(text);
+        }
+
+        /// <summary>
+        ///     Writes given text to the console window.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="color">The text color.</param>
+        public void Write(string text, Color color)
+        {
+            _handler.AddLine(text, color);
+        }
+
         public void Autocomplete()
         {
             if (IsSelectingHighlight)
