@@ -46,6 +46,7 @@ namespace AlwaysTooLate.Console
             // Load and spawn Console canvas
             var consolePrefab = Resources.Load<GameObject>(ConsolePrefabName);
             Debug.Assert(consolePrefab, $"Console prefab ({ConsolePrefabName}) not found!");
+            Debug.Assert(CommandManager.Instance, $"CommandManager instance is missing! CommandManager is required for console to work, please add it somewhere.");
             _console = Instantiate(consolePrefab);
             _handler = _console.GetComponentInChildren<ConsoleHandler>();
 
@@ -190,8 +191,6 @@ namespace AlwaysTooLate.Console
                 return;
 
             var commands = CommandManager.GetCommands();
-            var variables = CVarManager.Instance.AllVariables;
-            
             foreach (var cmd in commands)
             {
                 if (!cmd.Name.Contains(command))
@@ -203,15 +202,20 @@ namespace AlwaysTooLate.Console
                     break;
             }
 
-            foreach (var var in variables)
+            if (CVarManager.Instance != null)
             {
-                if (!var.Key.Contains(command))
-                    continue;
+                var variables = CVarManager.Instance.AllVariables;
 
-                _highlights.Add(var.Key);
+                foreach (var var in variables)
+                {
+                    if (!var.Key.Contains(command))
+                        continue;
 
-                if (_highlights.Count == 32)
-                    break;
+                    _highlights.Add(var.Key);
+
+                    if (_highlights.Count == 32)
+                        break;
+                }
             }
 
             _highlights.Sort();
