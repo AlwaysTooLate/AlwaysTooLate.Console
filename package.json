@@ -1,15 +1,12 @@
 {
-    "name": "AlwaysTooLate.Console", 
+    "name": "com.alwaystoolate.console", 
+    "displayName": "AlwaysTooLate Console",
+    "description": "AlwaysTooLate Console module",
     "unity": "2018.3", 
-    "version": "1.0.0-preview", 
+    "version": "1.0.0", 
     "dependencies": {
-		"com.unity.textmeshpro": "1.3.0",
-        "AlwaysTooLate.Core": "1.0",
-        "AlwaysTooLate.CVars": "1.0",
-        "AlwaysTooLate.Commands": "1.0"
-    }, 
-    "keywords": [
-        "AlwaysTooLate"
-    ], 
-    "description": "AlwaysTooLate runtime console module"
+		"com.alwaystoolate.core": "1.0.0",
+		"com.alwaystoolate.commands": "1.0.0",
+		"com.alwaystoolate.cvars": "1.0.0"
+	}
 }
