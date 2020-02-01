@@ -7,6 +7,7 @@ using AlwaysTooLate.Commands;
 using AlwaysTooLate.Core;
 using AlwaysTooLate.CVars;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace AlwaysTooLate.Console
 {
@@ -42,6 +43,9 @@ namespace AlwaysTooLate.Console
         /// </summary>
         [Tooltip("The key that opens the console window.")]
         public KeyCode OpenConsoleKey = KeyCode.BackQuote;
+
+        public UnityEvent OnConsoleShow;
+        public UnityEvent OnConsoleHide;
 
         public bool IsSelectingHighlight => _commandCursor >= _previousCommands.Count;
         public bool IsConsoleOpen { get; private set; }
@@ -251,9 +255,15 @@ namespace AlwaysTooLate.Console
             IsConsoleOpen = activeState;
 
             if (IsConsoleOpen)
+            {
+                OnConsoleShow?.Invoke();
                 _handler.Open();
+            }
             else
+            {
+                OnConsoleHide?.Invoke();
                 _handler.Close();
+            }
         }
     }
 }

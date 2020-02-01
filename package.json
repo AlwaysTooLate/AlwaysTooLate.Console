@@ -1,12 +1,13 @@
 {
-    "name": "com.alwaystoolate.console", 
-    "displayName": "AlwaysTooLate Console",
-    "description": "AlwaysTooLate Console module",
-    "unity": "2018.3", 
-    "version": "1.0.0", 
-    "dependencies": {
-		"com.alwaystoolate.core": "1.0.0",
-		"com.alwaystoolate.commands": "1.0.0",
-		"com.alwaystoolate.cvars": "1.0.0"
-	}
+  "name": "com.alwaystoolate.console",
+  "displayName": "AlwaysTooLate Console",
+  "description": "AlwaysTooLate Console module",
+  "unity": "2018.3",
+  "version": "1.0.0",
+  "dependencies": {
+    "com.alwaystoolate.core": "1.0.0",
+    "com.alwaystoolate.commands": "1.0.0",
+    "com.alwaystoolate.cvars": "1.0.0"
+  },
+  "type": "library"
 }
