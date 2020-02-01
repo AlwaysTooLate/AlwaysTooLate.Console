@@ -9,22 +9,29 @@ namespace AlwaysTooLate.Console
 {
     public class ConsoleHandler : MonoBehaviour
     {
-        public TMP_InputField CommandField;
-        public ScrollRect ScrollRect;
+        private GameObjectPool _textPool;
         public Animation Animation;
+        public TMP_InputField CommandField;
         public Transform Content;
-        public Transform Highlights;
 
         public TMP_FontAsset Font;
 
         public int FontSize = 14;
+        public Transform Highlights;
+        public ScrollRect ScrollRect;
 
-        private GameObjectPool _textPool;
+        public bool IsEnteringCommand => CommandField.isFocused;
+
+        public string CurrentCommand
+        {
+            get => CommandField.text;
+            set => CommandField.text = value;
+        }
 
         protected void Start()
         {
             // Setup GameObject pool (+32 elems for highlights)
-            _textPool = new GameObjectPool(ConsoleManager.Instance.MaxMessages + 32, new []
+            _textPool = new GameObjectPool(ConsoleManager.Instance.MaxMessages + 32, new[]
             {
                 typeof(TextMeshProUGUI), typeof(ContentSizeFitter)
             });
@@ -39,7 +46,7 @@ namespace AlwaysTooLate.Console
             _textPool.Dispose();
             _textPool = null;
         }
-        
+
         public void Open()
         {
             gameObject.SetActive(true);
@@ -99,17 +106,17 @@ namespace AlwaysTooLate.Console
             }
 
             Highlights.gameObject.SetActive(true);
-            
+
             foreach (var highlight in highlights)
-            { 
+            {
                 // Setup text rect
                 var textObject = _textPool.Acquire();
 
                 // Setup transform
-                var textTransform = (RectTransform)textObject.transform;
+                var textTransform = (RectTransform) textObject.transform;
                 textTransform.SetParent(Highlights);
                 textTransform.sizeDelta = new Vector2(textTransform.sizeDelta.x, 20);
-               
+
                 // Setup text
                 var textComponent = textObject.GetComponent<TextMeshProUGUI>();
                 textComponent.text = RichTextExtensions.ColorInnerString(highlight, markText, "green");
@@ -138,14 +145,14 @@ namespace AlwaysTooLate.Console
                 return;
 
             // Release old children to maintain the desired message count
-            while(Content.childCount >= ConsoleManager.Instance.MaxMessages)
+            while (Content.childCount >= ConsoleManager.Instance.MaxMessages)
                 _textPool.Release(Content.GetChild(0).gameObject);
-            
+
             // Setup text rect
             var textObject = _textPool.Acquire();
 
             // Setup transform
-            var textTransform = (RectTransform)textObject.transform;
+            var textTransform = (RectTransform) textObject.transform;
             textTransform.SetParent(Content);
             textTransform.sizeDelta = new Vector2(textTransform.sizeDelta.x, 20);
 
@@ -160,7 +167,7 @@ namespace AlwaysTooLate.Console
             // Setup content size fitter
             var textFitter = textObject.GetComponent<ContentSizeFitter>();
             textFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            
+
             // TODO: Fix scroll to bottom issue.
             ScrollRect.verticalNormalizedPosition = 0.0f;
         }
@@ -195,14 +202,6 @@ namespace AlwaysTooLate.Console
         public void OnInputCommand(string command)
         {
             ConsoleManager.Instance.OnCommandEnter(command);
-        }
-
-        public bool IsEnteringCommand => CommandField.isFocused;
-
-        public string CurrentCommand
-        {
-            get => CommandField.text;
-            set => CommandField.text = value;
         }
     }
 }

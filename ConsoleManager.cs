@@ -11,42 +11,48 @@ using UnityEngine;
 namespace AlwaysTooLate.Console
 {
     /// <summary>
-    /// ConsoleManager class. Implements console behavior.
-    /// Should be initialized on main (entry) scene.
+    ///     ConsoleManager class. Implements console behavior.
+    ///     Should be initialized on main (entry) scene.
     /// </summary>
+    [DefaultExecutionOrder(-500)]
+    [RequireComponent(typeof(CommandManager))] // Commands are mandatory
     public class ConsoleManager : BehaviourSingleton<ConsoleManager>
     {
         public const string ConsolePrefabName = "AlwaysTooLate.Console";
+        private readonly List<string> _highlights = new List<string>(32);
 
         private readonly List<string> _previousCommands = new List<string>(32);
-        private readonly List<string> _highlights = new List<string>(32);
-        
+
         private int _commandCursor;
         private GameObject _console;
         private ConsoleHandler _handler;
 
         /// <summary>
-        /// The maximal number of messages that can be shown in the console.
-        /// When console message count exceeds this number, the oldest logs
-        /// will be removed.
+        ///     The maximal number of messages that can be shown in the console.
+        ///     When console message count exceeds this number, the oldest logs
+        ///     will be removed.
         /// </summary>
         [Tooltip("The maximal number of messages that can be shown in the console. " +
                  "When console message count exceeds this number, " +
                  "the oldest logs will be removed.")]
         public int MaxMessages = 256;
-        
+
         /// <summary>
-        /// The key that opens the console window.
+        ///     The key that opens the console window.
         /// </summary>
         [Tooltip("The key that opens the console window.")]
         public KeyCode OpenConsoleKey = KeyCode.BackQuote;
+
+        public bool IsSelectingHighlight => _commandCursor >= _previousCommands.Count;
+        public bool IsConsoleOpen { get; private set; }
 
         protected override void OnAwake()
         {
             // Load and spawn Console canvas
             var consolePrefab = Resources.Load<GameObject>(ConsolePrefabName);
             Debug.Assert(consolePrefab, $"Console prefab ({ConsolePrefabName}) not found!");
-            Debug.Assert(CommandManager.Instance, $"CommandManager instance is missing! CommandManager is required for console to work, please add it somewhere.");
+            Debug.Assert(CommandManager.Instance,
+                "CommandManager instance is missing! CommandManager is required for console to work, please add it somewhere.");
             _console = Instantiate(consolePrefab);
             _handler = _console.GetComponentInChildren<ConsoleHandler>();
 
@@ -61,10 +67,7 @@ namespace AlwaysTooLate.Console
 
         protected void Update()
         {
-            if (Input.GetKeyDown(OpenConsoleKey))
-            {
-                SetConsoleActive(!IsConsoleOpen);
-            }
+            if (Input.GetKeyDown(OpenConsoleKey)) SetConsoleActive(!IsConsoleOpen);
 
             if (IsConsoleOpen && _handler.IsEnteringCommand)
             {
@@ -79,13 +82,11 @@ namespace AlwaysTooLate.Console
                     _commandCursor++;
                     UpdateHighlights();
                 }
-                
+
                 // Autocomplete
                 if (Input.GetKeyDown(KeyCode.Tab))
-                {
                     // Try to complete the current command
                     Autocomplete();
-                }
             }
         }
 
@@ -94,14 +95,10 @@ namespace AlwaysTooLate.Console
             _commandCursor = Mathf.Clamp(_commandCursor, 0, _previousCommands.Count - 1 + _highlights.Count);
 
             if (IsSelectingHighlight)
-            {
                 _handler.SelectHighlight(_commandCursor - _previousCommands.Count);
-            }
             else
-            {
                 // Select from history
                 _handler.CurrentCommand = _previousCommands[_commandCursor];
-            }
         }
 
         private void OnLog(string condition, string stacktrace, LogType type)
@@ -171,13 +168,11 @@ namespace AlwaysTooLate.Console
                 var commands = CommandManager.GetCommands();
 
                 foreach (var command in commands)
-                {
                     if (command.Name.StartsWith(currentCommand))
                     {
                         _handler.CurrentCommand = command.Name + " ";
                         break;
                     }
-                }
 
                 _handler.MoveCaretToEnd();
             }
@@ -241,7 +236,7 @@ namespace AlwaysTooLate.Console
             _commandCursor = _previousCommands.Count;
 
             // Remove commands that are old
-            if(_previousCommands.Count >= 32)
+            if (_previousCommands.Count >= 32)
                 _previousCommands.RemoveAt(0);
 
             _handler.SetHighlights(null);
@@ -249,23 +244,16 @@ namespace AlwaysTooLate.Console
         }
 
         /// <summary>
-        /// Sets console active state.
+        ///     Sets console active state.
         /// </summary>
         public void SetConsoleActive(bool activeState)
         {
             IsConsoleOpen = activeState;
 
             if (IsConsoleOpen)
-            {
                 _handler.Open();
-            }
             else
-            {
                 _handler.Close();
-            }
         }
-
-        public bool IsSelectingHighlight => _commandCursor >= _previousCommands.Count;
-        public bool IsConsoleOpen { get; private set; }
     }
 }
