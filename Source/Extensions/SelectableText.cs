@@ -1,6 +1,6 @@
 ﻿// AlwaysTooLate.Console (c) 2018-2019 Always Too Late.
+// UnityEngine.UI (c) Unity Technologies
 
-using System;
 using System.Collections;
 using UnityEditor;
 using UnityEngine;
@@ -11,12 +11,14 @@ using UnityEngine.UI;
 namespace AlwaysTooLate.Console.Extensions
 {
     internal class SelectableText
-        : Selectable,
+        : UIBehaviour,
             IUpdateSelectedHandler,
             IBeginDragHandler,
             IDragHandler,
             IEndDragHandler,
+            IPointerDownHandler,
             IPointerClickHandler,
+            ISelectHandler,
             ICanvasElement,
             ILayoutElement
     {
@@ -27,16 +29,15 @@ namespace AlwaysTooLate.Console.Extensions
         private Coroutine _blinkCoroutine;
         private float _blinkStartTime;
         private CanvasRenderer _cachedInputRenderer;
-        protected int _caretPosition;
-        protected int _caretSelectPosition;
-        protected bool _caretVisible;
-        protected UIVertex[] _cursorVerts;
+        private int _caretPosition;
+        private int _caretSelectPosition;
+        private bool _caretVisible;
+        private UIVertex[] _cursorVerts;
         private Coroutine _dragCoroutine;
         private bool _dragPositionOutOfBounds;
-        protected int _drawEnd;
-        protected int _drawStart;
+        private int _drawEnd;
+        private int _drawStart;
         private TextGenerator _inputTextCache;
-        protected TouchScreenKeyboard _keyboard;
         private bool _preventFontCallback;
         private readonly Event _processingEvent = new Event();
         private bool _shouldActivateNextUpdate;
@@ -45,121 +46,35 @@ namespace AlwaysTooLate.Console.Extensions
         private WaitForSecondsRealtime _waitForSecondsRealtime;
         private Mesh _mesh;
 
+        [SerializeField]
+        protected Text TextComponent;
+
         [FormerlySerializedAs("m_SelectionColor")] [SerializeField]
         private Color SelectionColor = new Color(168f / 255f, 206f / 255f, 255f / 255f, 192f / 255f);
 
         [SerializeField]
-        [Multiline]
-        protected string Text = string.Empty;
-
-        [SerializeField]
-        protected Text TextComponent;
+        private Color CaretColor = new Color(50f / 255f, 50f / 255f, 50f / 255f, 1f);
 
         [SerializeField] [Range(1, 5)] 
         private int CaretWidth = 1;
-
-        [SerializeField] 
-        private bool CustomCaretColor;
 
         [SerializeField] [Range(0f, 4f)] 
         private float CaretBlinkRate = 0.85f;
 
         [SerializeField]
-        private Color CaretColor = new Color(50f / 255f, 50f / 255f, 50f / 255f, 1f);
+        [Multiline]
+        protected string Text = string.Empty;
 
         public bool IsFocused { get; private set; }
 
-        protected Mesh Mesh
-        {
-            get
-            {
-                if (_mesh == null)
-                    _mesh = new Mesh();
-                return _mesh;
-            }
-        }
+        protected Mesh Mesh => _mesh ? _mesh : (_mesh = new Mesh());
 
-        protected TextGenerator CachedInputTextGenerator
-        {
-            get
-            {
-                if (_inputTextCache == null)
-                    _inputTextCache = new TextGenerator();
+        protected TextGenerator CachedInputTextGenerator => _inputTextCache ?? (_inputTextCache = new TextGenerator());
 
-                return _inputTextCache;
-            }
-        }
-
-        public string text
+        public string Value
         {
             get => Text;
             set => SetText(value);
-        }
-
-        /// <summary>
-        ///     The Text component that is going to be used to render the text to screen.
-        /// </summary>
-        public Text textComponent
-        {
-            get => TextComponent;
-            set
-            {
-                if (TextComponent != null)
-                {
-                    TextComponent.UnregisterDirtyVerticesCallback(MarkGeometryAsDirty);
-                    TextComponent.UnregisterDirtyVerticesCallback(UpdateLabel);
-                    TextComponent.UnregisterDirtyMaterialCallback(UpdateCaretMaterial);
-                }
-
-                TextComponent = value;
-
-                EnforceTextHOverflow();
-                if (TextComponent != null)
-                {
-                    TextComponent.RegisterDirtyVerticesCallback(MarkGeometryAsDirty);
-                    TextComponent.RegisterDirtyVerticesCallback(UpdateLabel);
-                    TextComponent.RegisterDirtyMaterialCallback(UpdateCaretMaterial);
-                }
-            }
-        }
-
-        /// <summary>
-        ///     The custom caret color used if customCaretColor is set.
-        /// </summary>
-        public Color caretColor
-        {
-            get => customCaretColor ? CaretColor : textComponent.color;
-            set
-            {
-                CaretColor = value;
-                MarkGeometryAsDirty();
-            }
-        }
-
-        /// <summary>
-        ///     Should a custom caret color be used or should the textComponent.color be used.
-        /// </summary>
-        public bool customCaretColor
-        {
-            get => CustomCaretColor;
-            set
-            {
-                if (CustomCaretColor != value)
-                {
-                    CustomCaretColor = value;
-                    MarkGeometryAsDirty();
-                }
-            }
-        }
-
-        public Color selectionColor
-        {
-            get => SelectionColor;
-            set
-            {
-                SelectionColor = value;
-                MarkGeometryAsDirty();
-            }
         }
 
         protected int CaretPositionInternal
@@ -243,14 +158,13 @@ namespace AlwaysTooLate.Console.Extensions
             if (!GetRelativeMousePositionForDrag(eventData, ref position))
                 return;
 
-            Vector2 localMousePos;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(textComponent.rectTransform, position,
-                eventData.pressEventCamera, out localMousePos);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(TextComponent.rectTransform, position,
+                eventData.pressEventCamera, out var localMousePos);
             CaretSelectPositionInternal = GetCharacterIndexFromPosition(localMousePos) + _drawStart;
 
             MarkGeometryAsDirty();
 
-            _dragPositionOutOfBounds = !RectTransformUtility.RectangleContainsScreenPoint(textComponent.rectTransform,
+            _dragPositionOutOfBounds = !RectTransformUtility.RectangleContainsScreenPoint(TextComponent.rectTransform,
                 eventData.position, eventData.pressEventCamera);
             if (_dragPositionOutOfBounds && _dragCoroutine == null)
                 _dragCoroutine = StartCoroutine(MouseDragOutsideRect(eventData));
@@ -296,11 +210,11 @@ namespace AlwaysTooLate.Console.Extensions
         {
             get
             {
-                if (textComponent == null)
+                if (TextComponent == null)
                     return 0;
-                var settings = textComponent.GetGenerationSettings(Vector2.zero);
-                return textComponent.cachedTextGeneratorForLayout.GetPreferredWidth(Text, settings) /
-                       textComponent.pixelsPerUnit;
+                var settings = TextComponent.GetGenerationSettings(Vector2.zero);
+                return TextComponent.cachedTextGeneratorForLayout.GetPreferredWidth(Text, settings) /
+                       TextComponent.pixelsPerUnit;
             }
         }
 
@@ -321,12 +235,12 @@ namespace AlwaysTooLate.Console.Extensions
         {
             get
             {
-                if (textComponent == null)
+                if (TextComponent == null)
                     return 0;
                 var settings =
-                    textComponent.GetGenerationSettings(new Vector2(textComponent.rectTransform.rect.size.x, 0.0f));
-                return textComponent.cachedTextGeneratorForLayout.GetPreferredHeight(Text, settings) /
-                       textComponent.pixelsPerUnit;
+                    TextComponent.GetGenerationSettings(new Vector2(TextComponent.rectTransform.rect.size.x, 0.0f));
+                return TextComponent.cachedTextGeneratorForLayout.GetPreferredHeight(Text, settings) /
+                       TextComponent.pixelsPerUnit;
             }
         }
 
@@ -395,7 +309,7 @@ namespace AlwaysTooLate.Console.Extensions
 
         private void SetText(string value, bool sendCallback = true)
         {
-            if (text == value)
+            if (Value == value)
                 return;
             if (value == null)
                 value = "";
@@ -411,9 +325,6 @@ namespace AlwaysTooLate.Console.Extensions
             }
 #endif
 
-            if (_keyboard != null)
-                _keyboard.text = Text;
-
             if (_caretPosition > Text.Length)
                 _caretPosition = _caretSelectPosition = Text.Length;
             else if (_caretSelectPosition > Text.Length)
@@ -427,11 +338,11 @@ namespace AlwaysTooLate.Console.Extensions
         /// <summary>
         ///     Clamp a value (by reference) between 0 and the current text length.
         /// </summary>
-        /// <param name="pos">The input position to be clampped</param>
+        /// <param name="pos">The input position to be clamped</param>
         protected void ClampPos(ref int pos)
         {
             if (pos < 0) pos = 0;
-            else if (pos > text.Length) pos = text.Length;
+            else if (pos > Value.Length) pos = Value.Length;
         }
 
 #if UNITY_EDITOR
@@ -580,7 +491,7 @@ namespace AlwaysTooLate.Console.Extensions
         /// </remarks>
         protected void SelectAll()
         {
-            CaretPositionInternal = text.Length;
+            CaretPositionInternal = Value.Length;
             CaretSelectPositionInternal = 0;
         }
 
@@ -590,7 +501,7 @@ namespace AlwaysTooLate.Console.Extensions
         /// <param name="shift">Only move the selection position to facilate selection</param>
         public void MoveTextEnd(bool shift)
         {
-            var position = text.Length;
+            var position = Value.Length;
 
             if (shift)
             {
@@ -631,35 +542,6 @@ namespace AlwaysTooLate.Console.Extensions
             return !TouchScreenKeyboard.isSupported || _touchKeyboardAllowsInPlaceEditing;
         }
 
-        private void UpdateCaretFromKeyboard()
-        {
-            var selectionRange = _keyboard.selection;
-
-            var selectionStart = selectionRange.start;
-            var selectionEnd = selectionRange.end;
-
-            var caretChanged = false;
-
-            if (CaretPositionInternal != selectionStart)
-            {
-                caretChanged = true;
-                CaretPositionInternal = selectionStart;
-            }
-
-            if (CaretSelectPositionInternal != selectionEnd)
-            {
-                CaretSelectPositionInternal = selectionEnd;
-                caretChanged = true;
-            }
-
-            if (caretChanged)
-            {
-                _blinkStartTime = Time.unscaledTime;
-
-                UpdateLabel();
-            }
-        }
-
         /// <summary>
         ///     Update the text based on input.
         /// </summary>
@@ -683,15 +565,9 @@ namespace AlwaysTooLate.Console.Extensions
 
             if (!IsFocused || InPlaceEditing())
                 return;
-
-            var val = _keyboard.text;
-
-            if (Text != val)
-                _keyboard.text = Text;
-            else if (_keyboard.canGetSelection) UpdateCaretFromKeyboard();
         }
 
-        private int GetUnclampedCharacterLineFromPosition(Vector2 pos, TextGenerator generator)
+        private int GetUnClampedCharacterLineFromPosition(Vector2 pos, TextGenerator generator)
         {
             // transform y to local scale
             var y = pos.y * TextComponent.pixelsPerUnit;
@@ -734,7 +610,7 @@ namespace AlwaysTooLate.Console.Extensions
             if (gen.lineCount == 0)
                 return 0;
 
-            var line = GetUnclampedCharacterLineFromPosition(pos, gen);
+            var line = GetUnClampedCharacterLineFromPosition(pos, gen);
             if (line < 0)
                 return 0;
             if (line >= gen.lineCount)
@@ -763,7 +639,6 @@ namespace AlwaysTooLate.Console.Extensions
         private bool MayDrag(PointerEventData eventData)
         {
             return IsActive() &&
-                   IsInteractable() &&
                    eventData.button == PointerEventData.InputButton.Left &&
                    TextComponent != null &&
                    InPlaceEditing();
@@ -778,10 +653,10 @@ namespace AlwaysTooLate.Console.Extensions
                     break;
 
                 Vector2 localMousePos;
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(textComponent.rectTransform, position,
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(TextComponent.rectTransform, position,
                     eventData.pressEventCamera, out localMousePos);
 
-                var rect = textComponent.rectTransform.rect;
+                var rect = TextComponent.rectTransform.rect;
 
                 if (localMousePos.y > rect.yMax)
                     MoveUp(true, true);
@@ -803,7 +678,7 @@ namespace AlwaysTooLate.Console.Extensions
         /// <summary>
         ///     The action to perform when the event system sends a pointer down Event.
         /// </summary>
-        public override void OnPointerDown(PointerEventData eventData)
+        public void OnPointerDown(PointerEventData eventData)
         {
             if (!MayDrag(eventData))
                 return;
@@ -811,23 +686,13 @@ namespace AlwaysTooLate.Console.Extensions
             EventSystem.current.SetSelectedGameObject(gameObject, eventData);
 
             var hadFocusBefore = IsFocused;
-            base.OnPointerDown(eventData);
-
-            if (!InPlaceEditing())
-                if (_keyboard == null || !_keyboard.active)
-                {
-                    OnSelect(eventData);
-                    return;
-                }
 
             // Only set caret position if we didn't just get focus now.
             // Otherwise it will overwrite the select all on focus.
             if (hadFocusBefore)
             {
-                Vector2 localMousePos;
-
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(textComponent.rectTransform,
-                    eventData.pointerPressRaycast.screenPosition, eventData.pressEventCamera, out localMousePos);
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(TextComponent.rectTransform,
+                    eventData.pointerPressRaycast.screenPosition, eventData.pressEventCamera, out var localMousePos);
                 CaretSelectPositionInternal =
                     CaretPositionInternal = GetCharacterIndexFromPosition(localMousePos) + _drawStart;
             }
@@ -940,18 +805,18 @@ namespace AlwaysTooLate.Console.Extensions
                 endPos = temp;
             }
 
-            return text.Substring(startPos, endPos - startPos);
+            return Value.Substring(startPos, endPos - startPos);
         }
 
-        private int FindtNextWordBegin()
+        private int FindNextWordBegin()
         {
-            if (CaretSelectPositionInternal + 1 >= text.Length)
-                return text.Length;
+            if (CaretSelectPositionInternal + 1 >= Value.Length)
+                return Value.Length;
 
-            var spaceLoc = text.IndexOfAny(KSeparators, CaretSelectPositionInternal + 1);
+            var spaceLoc = Value.IndexOfAny(KSeparators, CaretSelectPositionInternal + 1);
 
             if (spaceLoc == -1)
-                spaceLoc = text.Length;
+                spaceLoc = Value.Length;
             else
                 spaceLoc++;
 
@@ -971,7 +836,7 @@ namespace AlwaysTooLate.Console.Extensions
 
             int position;
             if (ctrl)
-                position = FindtNextWordBegin();
+                position = FindNextWordBegin();
             else
                 position = CaretSelectPositionInternal + 1;
 
@@ -981,12 +846,12 @@ namespace AlwaysTooLate.Console.Extensions
                 CaretSelectPositionInternal = CaretPositionInternal = position;
         }
 
-        private int FindtPrevWordBegin()
+        private int FindPrevWordBegin()
         {
             if (CaretSelectPositionInternal - 2 < 0)
                 return 0;
 
-            var spaceLoc = text.LastIndexOfAny(KSeparators, CaretSelectPositionInternal - 2);
+            var spaceLoc = Value.LastIndexOfAny(KSeparators, CaretSelectPositionInternal - 2);
 
             if (spaceLoc == -1)
                 spaceLoc = 0;
@@ -1009,7 +874,7 @@ namespace AlwaysTooLate.Console.Extensions
 
             int position;
             if (ctrl)
-                position = FindtPrevWordBegin();
+                position = FindPrevWordBegin();
             else
                 position = CaretSelectPositionInternal - 1;
 
@@ -1057,14 +922,14 @@ namespace AlwaysTooLate.Console.Extensions
         private int LineDownCharacterPosition(int originalPos, bool goToLastChar)
         {
             if (originalPos >= CachedInputTextGenerator.characterCountVisible)
-                return text.Length;
+                return Value.Length;
 
             var originChar = CachedInputTextGenerator.characters[originalPos];
             var originLine = DetermineCharacterLine(originalPos, CachedInputTextGenerator);
 
             // We are on the last line return last character
             if (originLine + 1 >= CachedInputTextGenerator.lineCount)
-                return goToLastChar ? text.Length : originalPos;
+                return goToLastChar ? Value.Length : originalPos;
 
             // Need to determine end line for next line.
             var endCharIdx = GetLineEndPosition(CachedInputTextGenerator, originLine + 1);
@@ -1075,12 +940,7 @@ namespace AlwaysTooLate.Console.Extensions
             return endCharIdx;
         }
 
-        private void MoveDown(bool shift)
-        {
-            MoveDown(shift, true);
-        }
-
-        private void MoveDown(bool shift, bool goToLastChar)
+        private void MoveDown(bool shift, bool goToLastChar = true)
         {
             if (HasSelection && !shift)
                 // If we have a selection and press down without shift,
@@ -1115,13 +975,6 @@ namespace AlwaysTooLate.Console.Extensions
                 CaretSelectPositionInternal = position;
             else
                 CaretSelectPositionInternal = CaretPositionInternal = position;
-        }
-
-        private void UpdateTouchKeyboardFromEditChanges()
-        {
-            // Update the TouchKeyboard's text from edit changes
-            // if in-place editing is allowed
-            if (_keyboard != null && InPlaceEditing()) _keyboard.text = Text;
         }
 
         private void SendOnValueChangedAndUpdateLabel()
@@ -1159,9 +1012,9 @@ namespace AlwaysTooLate.Console.Extensions
 
                 string fullText;
                 if (EventSystem.current != null && gameObject == EventSystem.current.currentSelectedGameObject)
-                    fullText = text.Substring(0, _caretPosition) + text.Substring(_caretPosition);
+                    fullText = Value.Substring(0, _caretPosition) + Value.Substring(_caretPosition);
                 else
-                    fullText = text;
+                    fullText = Value;
 
                 var processed = fullText;
 
@@ -1307,8 +1160,10 @@ namespace AlwaysTooLate.Console.Extensions
 
             if (_cachedInputRenderer == null && TextComponent != null)
             {
-                var go = new GameObject(transform.name + " Input Caret", typeof(RectTransform), typeof(CanvasRenderer));
-                go.hideFlags = HideFlags.DontSave;
+                var go = new GameObject(transform.name + " Input Caret", typeof(RectTransform), typeof(CanvasRenderer))
+                {
+                    hideFlags = HideFlags.DontSave
+                };
                 go.transform.SetParent(TextComponent.transform.parent);
                 go.transform.SetAsFirstSibling();
                 go.layer = gameObject.layer;
@@ -1407,11 +1262,12 @@ namespace AlwaysTooLate.Console.Extensions
                 startPosition.x = TextComponent.rectTransform.rect.xMax;
 
             var characterLine = DetermineCharacterLine(adjustedPos, gen);
-            startPosition.y = gen.lines[characterLine].topY / TextComponent.pixelsPerUnit;
-            var height = gen.lines[characterLine].height / TextComponent.pixelsPerUnit;
+            var pixelsPerUnit = TextComponent.pixelsPerUnit;
+            startPosition.y = gen.lines[characterLine].topY / pixelsPerUnit;
+            var height = gen.lines[characterLine].height / pixelsPerUnit;
 
             for (var i = 0; i < _cursorVerts.Length; i++)
-                _cursorVerts[i].color = caretColor;
+                _cursorVerts[i].color = CaretColor;
 
             _cursorVerts[0].position = new Vector3(startPosition.x, startPosition.y - height, 0.0f);
             _cursorVerts[1].position = new Vector3(startPosition.x + width, startPosition.y - height, 0.0f);
@@ -1484,7 +1340,7 @@ namespace AlwaysTooLate.Console.Extensions
 
             var vert = UIVertex.simpleVert;
             vert.uv0 = Vector2.zero;
-            vert.color = selectionColor;
+            vert.color = SelectionColor;
 
             var currentChar = startChar;
             while (currentChar <= endChar && currentChar < gen.characterCount)
@@ -1493,11 +1349,12 @@ namespace AlwaysTooLate.Console.Extensions
                 {
                     var startCharInfo = gen.characters[startChar];
                     var endCharInfo = gen.characters[currentChar];
-                    var startPosition = new Vector2(startCharInfo.cursorPos.x / TextComponent.pixelsPerUnit,
-                        gen.lines[currentLineIndex].topY / TextComponent.pixelsPerUnit);
+                    var pixelsPerUnit = TextComponent.pixelsPerUnit;
+                    var startPosition = new Vector2(startCharInfo.cursorPos.x / pixelsPerUnit,
+                        gen.lines[currentLineIndex].topY / pixelsPerUnit);
                     var endPosition =
-                        new Vector2((endCharInfo.cursorPos.x + endCharInfo.charWidth) / TextComponent.pixelsPerUnit,
-                            startPosition.y - gen.lines[currentLineIndex].height / TextComponent.pixelsPerUnit);
+                        new Vector2((endCharInfo.cursorPos.x + endCharInfo.charWidth) / pixelsPerUnit,
+                            startPosition.y - gen.lines[currentLineIndex].height / pixelsPerUnit);
 
                     // Checking xMin as well due to text generator not setting position if char is not rendered.
                     if (endPosition.x > TextComponent.rectTransform.rect.xMax ||
@@ -1532,15 +1389,8 @@ namespace AlwaysTooLate.Console.Extensions
 
         public void ActivateInputField()
         {
-            if (TextComponent == null || TextComponent.font == null || !IsActive() || !IsInteractable())
+            if (TextComponent == null || TextComponent.font == null || !IsActive())
                 return;
-
-            if (IsFocused)
-                if (_keyboard != null && !_keyboard.active)
-                {
-                    _keyboard.active = true;
-                    _keyboard.text = Text;
-                }
 
             _shouldActivateNextUpdate = true;
         }
@@ -1564,9 +1414,8 @@ namespace AlwaysTooLate.Console.Extensions
         ///     What to do when the event system sends a submit Event.
         /// </summary>
         /// <param name="eventData">The data on which to process</param>
-        public override void OnSelect(BaseEventData eventData)
+        public void OnSelect(BaseEventData eventData)
         {
-            base.OnSelect(eventData);
             ActivateInputField();
         }
 
