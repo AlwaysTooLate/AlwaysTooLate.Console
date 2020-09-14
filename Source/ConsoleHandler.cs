@@ -3,7 +3,6 @@
 using AlwaysTooLate.Core;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace AlwaysTooLate.Console
 {
@@ -81,10 +80,7 @@ namespace AlwaysTooLate.Console
 
         public void SetHighlights(string[] highlights, string markText = "")
         {
-            while (Highlights.childCount > 0)
-            {
-                Destroy(Highlights.GetChild(0).gameObject);
-            }
+            HighlightsText.text = string.Empty;
 
             if (highlights == null || highlights.Length == 0)
             {

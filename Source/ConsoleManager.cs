@@ -187,7 +187,10 @@ namespace AlwaysTooLate.Console
             _highlights.Clear();
 
             if (command.Length == 0)
+            {
+                _handler.SetHighlights(null);
                 return;
+            }
 
             var commands = CommandManager.GetCommands();
             foreach (var cmd in commands)
