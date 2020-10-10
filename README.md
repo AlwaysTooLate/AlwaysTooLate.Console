@@ -15,7 +15,7 @@ https://github.com/AlwaysTooLate/AlwaysTooLate.Console.git
 
 # Setup
 
-After succesfull installation, open a scene that is loaded first when starting your game (we recommend having an entry scene called Main that is only used for initializing core systems and utilities, which then loads the next scene, that is supposed to start the game - like a Main Menu). In the module's directory, go to the Resources folder and place the `AlwaysTooLate.Console.prefab` from it into the scene. In the ConsoleManager component, you can change the OpenConsoleKey (its default value is BackQuote) and attach custom Unity Events, that will be invoked when Showing and/or Hiding the console.
+After succesfull installation, open a scene that is loaded first when starting your game (we recommend having an entry scene called Main that is only used for initializing core systems and utilities, which then loads the next scene, that is supposed to start the game - like a Main Menu). Create new, empty game object called System or something like that and add new components 'CommandManager', 'CVarManager' and 'ConsoleManager' (if you haven't already done that). In the ConsoleManager component, you can change the OpenConsoleKey (its default value is BackQuote) and attach custom Unity Events, that will be invoked when Showing and/or Hiding the console.
 
 # Basic Usage
 
