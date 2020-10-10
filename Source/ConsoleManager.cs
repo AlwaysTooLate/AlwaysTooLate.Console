@@ -1,4 +1,4 @@
-﻿// AlwaysTooLate.Console (c) 2018-2019 Always Too Late.
+﻿// AlwaysTooLate.Console (c) 2018-2020 Always Too Late.
 
 using System;
 using System.Collections.Generic;
@@ -58,7 +58,7 @@ namespace AlwaysTooLate.Console
             Debug.Assert(CommandManager.Instance,
                 "CommandManager instance is missing! CommandManager is required for console to work, please add it somewhere.");
             _console = Instantiate(consolePrefab);
-            _handler = _console.GetComponentInChildren<ConsoleHandler>();
+            _handler = _console.GetComponent<ConsoleHandler>() ?? _console.GetComponentInChildren<ConsoleHandler>();
 
             // Do not destroy the console game object on scene change
             DontDestroyOnLoad(_console);
@@ -73,7 +73,7 @@ namespace AlwaysTooLate.Console
         {
             if (Input.GetKeyDown(OpenConsoleKey)) SetConsoleActive(!IsConsoleOpen);
 
-            if (IsConsoleOpen && _handler.IsEnteringCommand)
+            if (IsConsoleOpen && _handler && _handler.IsEnteringCommand)
             {
                 // Get previous/next command through Up/Down arrows
                 if (Input.GetKeyDown(KeyCode.UpArrow))
@@ -129,7 +129,7 @@ namespace AlwaysTooLate.Console
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
 
-            _handler.AddLine(condition, color);
+            if(_handler) _handler.AddLine(condition, color);
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace AlwaysTooLate.Console
         /// <param name="text">The text.</param>
         public void Write(string text)
         {
-            _handler.AddLine(text);
+            if (_handler) _handler.AddLine(text);
         }
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace AlwaysTooLate.Console
         /// <param name="color">The text color.</param>
         public void Write(string text, Color color)
         {
-            _handler.AddLine(text, color);
+            if (_handler) _handler.AddLine(text, color);
         }
 
         public void Autocomplete()

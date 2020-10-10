@@ -1,24 +1,39 @@
-﻿// AlwaysTooLate.Console (c) 2018-2019 Always Too Late.
+﻿// AlwaysTooLate.Console (c) 2018-2020 Always Too Late.
 
+using System.Collections.Generic;
 using AlwaysTooLate.Core;
+using AlwaysTooLate.Core.Pooling;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace AlwaysTooLate.Console
 {
+    [DefaultExecutionOrder(-9999)]
     public class ConsoleHandler : MonoBehaviour
     {
-        public Animation Animation;
         public TMP_InputField CommandField;
-        public TMP_InputField ConsoleOutput;
+        public ScrollRect ScrollRect;
 
-        public TMP_FontAsset Font;
+        public RectTransform Content;
 
-        public int FontSize = 14;
-        public Transform Highlights;
+        public RectTransform Highlights;
         public TMP_Text HighlightsText;
 
+        public GameObject LinePrefab;
+        public float LineHeight = 30.0f;
+
+        public Color LineAColor;
+        public Color LineBColor;
+
         public bool IsEnteringCommand => CommandField.isFocused;
+
+        private int _numLines;
+        private string[] _currentHighlights;
+        private string _currentMarkText;
+        private int _selectedHighlight;
+        private GameObjectPool<ConsoleLineHandle> _pool;
+        private readonly List<ConsoleLineHandle> _lines = new List<ConsoleLineHandle>();
 
         public string CurrentCommand
         {
@@ -28,22 +43,32 @@ namespace AlwaysTooLate.Console
 
         protected void Start()
         {
+            CommandField.onValueChanged.AddListener(OnTypeCommand);
+            CommandField.onSubmit.AddListener(OnInputCommand);
+
             gameObject.SetActive(false);
             Highlights.gameObject.SetActive(false);
+            _pool = new GameObjectPool<ConsoleLineHandle>(LinePrefab, 1024);
+        }
+
+        protected void OnDestroy()
+        {
+            Cleanup();
         }
 
         public void Open()
         {
             gameObject.SetActive(true);
-            OnOpenBegin();
+            gameObject.SetActive(true);
+            SetHighlights(null);
             SetFocus();
-            Animation.Play("ConsoleOpen");
         }
 
         public void Close()
         {
-            OnCloseBegin();
-            Animation.Play("ConsoleClose");
+            ClearCommand();
+            SetHighlights(null);
+            gameObject.SetActive(false);
         }
 
         public void ClearCommand()
@@ -53,7 +78,16 @@ namespace AlwaysTooLate.Console
 
         public void ClearConsole()
         {
-            ConsoleOutput.text = string.Empty;
+            // Release all lines
+            foreach (var line in _lines)
+            {
+                if (!line) continue;
+                _pool.Release(line);
+            }
+
+            // Cleanup and resize scroll's content
+            _numLines = 0;
+            UpdateContentSize();
         }
 
         public void SetFocus()
@@ -70,16 +104,15 @@ namespace AlwaysTooLate.Console
 
         public void SelectHighlight(int index)
         {
-            for (var i = 0; i < Highlights.childCount; i++)
-            {
-                var textObject = Highlights.GetChild(i);
-                var textComponent = textObject.GetComponent<TextMeshProUGUI>();
-                textComponent.color = index == i ? Color.yellow : Color.white;
-            }
+            _selectedHighlight = index;
+            SetHighlights(_currentHighlights, _currentMarkText);
         }
 
         public void SetHighlights(string[] highlights, string markText = "")
         {
+            _currentHighlights = highlights;
+            _currentMarkText = markText;
+
             HighlightsText.text = string.Empty;
 
             if (highlights == null || highlights.Length == 0)
@@ -90,11 +123,23 @@ namespace AlwaysTooLate.Console
 
             Highlights.gameObject.SetActive(true);
 
+            var highlightIndex = 0;
             foreach (var highlight in highlights)
             {
-                var text = RichTextExtensions.ColorInnerString(highlight, markText, "green");
-                HighlightsText.text += $"{text}\n";
+                if (_selectedHighlight == highlightIndex)
+                {
+                    HighlightsText.text += $"<color=yellow>{highlight}</color>\n";
+                }
+                else
+                {
+                    var text = RichTextExtensions.ColorInnerString(highlight, markText, "green");
+                    HighlightsText.text += $"{text}\n";
+                }
+
+                highlightIndex++;
             }
+
+            Highlights.sizeDelta = new Vector2(300.0f, 20.0f + highlights.Length * 18.0f);
         }
 
         public void AddLine(string text)
@@ -104,29 +149,22 @@ namespace AlwaysTooLate.Console
 
         public void AddLine(string text, Color color)
         {
-            ConsoleOutput.text += "\n" + text;
-        }
+            var line = _pool.Acquire();
 
-        protected void OnOpenBegin()
-        {
-            gameObject.SetActive(true);
-            SetHighlights(null);
-        }
+            if (line == null) return;
 
-        protected void OnOpenEnd() // Called from animation event
-        {
-        }
+            line.RectTransform.SetParent(Content);
+            line.RectTransform.anchoredPosition = new Vector2(0.0f, -_numLines * LineHeight);
+            line.RectTransform.sizeDelta = new Vector2(Screen.width - 20, LineHeight);
+            line.Image.color = GetColorForCurrentLine();
+            line.Text.text = text;
+            line.Text.color = color;
+            
+            _lines.Add(line);
 
-        protected void OnCloseBegin()
-        {
-            ClearCommand();
-            SetHighlights(null);
-        }
-
-        protected void OnCloseEnd() // Called from animation event
-        {
-            ClearCommand();
-            gameObject.SetActive(false);
+            _numLines++;
+            UpdateContentSize();
+            ScrollToBottom();
         }
 
         public void OnTypeCommand(string command)
@@ -137,6 +175,37 @@ namespace AlwaysTooLate.Console
         public void OnInputCommand(string command)
         {
             ConsoleManager.Instance.OnCommandEnter(command);
+        }
+
+        private void Cleanup()
+        {
+            if (_pool == null) return;
+
+            // Release all lines
+            foreach (var line in _lines)
+            {
+                if (!line) continue;
+                _pool.Release(line);
+            }
+
+            // Dispose the pool
+            _pool.Dispose();
+            _pool = null;
+        }
+
+        private void UpdateContentSize()
+        {
+            Content.sizeDelta = new Vector2(Screen.width, Mathf.Max(_numLines * LineHeight, LineHeight));
+        }
+
+        private Color GetColorForCurrentLine()
+        {
+            return _numLines % 2 == 0 ? LineAColor : LineBColor;
+        }
+
+        private void ScrollToBottom()
+        {
+            ScrollRect.normalizedPosition = new Vector2(0, 0);
         }
     }
 }
