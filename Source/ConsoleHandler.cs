@@ -1,5 +1,6 @@
 ﻿// AlwaysTooLate.Console (c) 2018-2020 Always Too Late.
 
+using System;
 using System.Collections.Generic;
 using AlwaysTooLate.Core;
 using AlwaysTooLate.Core.Pooling;
@@ -22,12 +23,14 @@ namespace AlwaysTooLate.Console
 
         public GameObject LinePrefab;
         public float LineHeight = 30.0f;
+        public float ScrollbarWidth = 20.0f;
 
         public Color LineAColor;
         public Color LineBColor;
 
         public bool IsEnteringCommand => CommandField.isFocused;
 
+        private int _screenWidth;
         private int _numLines;
         private string[] _currentHighlights;
         private string _currentMarkText;
@@ -43,6 +46,8 @@ namespace AlwaysTooLate.Console
 
         protected void Start()
         {
+            _screenWidth = Screen.width;
+
             CommandField.onValueChanged.AddListener(OnTypeCommand);
             CommandField.onSubmit.AddListener(OnInputCommand);
 
@@ -54,6 +59,11 @@ namespace AlwaysTooLate.Console
         protected void OnDestroy()
         {
             Cleanup();
+        }
+
+        protected void Update()
+        {
+            UpdateScreenSize();
         }
 
         public void Open()
@@ -155,7 +165,7 @@ namespace AlwaysTooLate.Console
 
             line.RectTransform.SetParent(Content);
             line.RectTransform.anchoredPosition = new Vector2(0.0f, -_numLines * LineHeight);
-            line.RectTransform.sizeDelta = new Vector2(Screen.width - 20, LineHeight);
+            line.RectTransform.sizeDelta = new Vector2(Screen.width - ScrollbarWidth, LineHeight);
             line.Image.color = GetColorForCurrentLine();
             line.Text.text = text;
             line.Text.color = color;
@@ -175,6 +185,27 @@ namespace AlwaysTooLate.Console
         public void OnInputCommand(string command)
         {
             ConsoleManager.Instance.OnCommandEnter(command);
+        }
+
+        private void UpdateScreenSize()
+        {
+            // Resize all lines, when the screen width changes.
+            // This is required, because we're not relying on the Unity's layout system.
+            if (_screenWidth != Screen.width)
+            {
+                ResizeLines();
+                _screenWidth = Screen.width;
+                _screenWidth = Screen.width;
+            }
+        }
+
+        private void ResizeLines()
+        {
+            var screenWidth = Screen.width;
+            foreach (var line in _lines)
+            {
+                line.RectTransform.sizeDelta = new Vector2(screenWidth - ScrollbarWidth, LineHeight);
+            }
         }
 
         private void Cleanup()
