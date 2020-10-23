@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AlwaysTooLate.Core;
 using AlwaysTooLate.Core.Pooling;
 using TMPro;
@@ -13,6 +14,8 @@ namespace AlwaysTooLate.Console
     [DefaultExecutionOrder(-9999)]
     public class ConsoleHandler : MonoBehaviour
     {
+        private int _totalLines;
+
         public TMP_InputField CommandField;
         public ScrollRect ScrollRect;
 
@@ -24,6 +27,9 @@ namespace AlwaysTooLate.Console
         public GameObject LinePrefab;
         public float LineHeight = 30.0f;
         public float ScrollbarWidth = 20.0f;
+
+        public int MaxLines = 256;
+        public bool LimitLineCount = true;
 
         public Color LineAColor;
         public Color LineBColor;
@@ -97,7 +103,9 @@ namespace AlwaysTooLate.Console
 
             // Cleanup and resize scroll's content
             _numLines = 0;
+            _totalLines = 0;
             UpdateContentSize();
+            _lines.Clear();
         }
 
         public void SetFocus()
@@ -173,8 +181,19 @@ namespace AlwaysTooLate.Console
             line.Text.color = color;
             
             _lines.Add(line);
-
             _numLines++;
+            _totalLines++;
+
+            if (LimitLineCount && _lines.Count > MaxLines)
+            {
+                var oldLine = _lines.First();
+                _lines.RemoveAt(0);
+                _pool.Release(oldLine);
+                _numLines--;
+
+                PositionLines();
+            }
+
             UpdateContentSize();
             ScrollToBottom();
         }
@@ -210,6 +229,16 @@ namespace AlwaysTooLate.Console
             }
         }
 
+        private void PositionLines()
+        {
+            _numLines = 0;
+            foreach (var line in _lines)
+            {
+                line.RectTransform.anchoredPosition = new Vector2(0.0f, -_numLines * LineHeight);
+                _numLines++;
+            }
+        }
+
         private void Cleanup()
         {
             if (_pool == null) return;
@@ -233,7 +262,7 @@ namespace AlwaysTooLate.Console
 
         private Color GetColorForCurrentLine()
         {
-            return _numLines % 2 == 0 ? LineAColor : LineBColor;
+            return _totalLines % 2 == 0 ? LineAColor : LineBColor;
         }
 
         private void ScrollToBottom()
