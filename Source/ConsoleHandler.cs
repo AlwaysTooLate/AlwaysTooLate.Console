@@ -159,6 +159,8 @@ namespace AlwaysTooLate.Console
 
         public void AddLine(string text, Color color)
         {
+            if (_pool == null) return;
+
             var line = _pool.Acquire();
 
             if (line == null) return;
