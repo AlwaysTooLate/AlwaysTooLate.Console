@@ -15,7 +15,8 @@ https://github.com/AlwaysTooLate/AlwaysTooLate.Console.git
 
 # Setup
 
-After succesfull installation, open a scene that is loaded first when starting your game (we recommend having an entry scene called Main that is only used for initializing core systems and utilities, which then loads the next scene, that is supposed to start the game - like a Main Menu). Create new, empty game object called System or something like that and add new components 'CommandManager', 'CVarManager' and 'ConsoleManager' (if you haven't already done that). In the ConsoleManager component, you can change the OpenConsoleKey (its default value is BackQuote) and attach custom Unity Events, that will be invoked when Showing and/or Hiding the console.
+After succesfull installation, open a scene that is loaded first when starting your game (we recommend having an entry scene called Main that is only used for initializing core systems and utilities, which then loads the next scene, that is supposed to start the game - like a Main Menu). Create new, empty game object called System or something like that and add new components 'CommandManager', 'CVarManager' and 'ConsoleManager' (if you haven't already done that). In the ConsoleManager component, you can change the OpenConsoleKey (its default value is BackQuote) and attach custom Unity Events, that will be invoked when Showing and/or Hiding the console. 
+Also, make sure that you've EventSystem somewhere in the scene, and if it's not there, then create new UI canvas and remove it, this will add the EventSystem for you.
 
 # Basic Usage
 
