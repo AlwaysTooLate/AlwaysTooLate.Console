@@ -1,6 +1,7 @@
 ﻿// AlwaysTooLate.Console (c) 2018-2020 Always Too Late.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using AlwaysTooLate.Commands;
@@ -19,6 +20,12 @@ namespace AlwaysTooLate.Console
     [RequireComponent(typeof(CommandManager))] // Commands are mandatory
     public class ConsoleManager : BehaviourSingleton<ConsoleManager>
     {
+        private struct LogItem
+        {
+            public Color Color;
+            public string Text;
+        }
+        
         public const string ConsolePrefabName = "AlwaysTooLate.Console";
         private readonly List<string> _highlights = new List<string>(32);
 
@@ -27,6 +34,8 @@ namespace AlwaysTooLate.Console
         private int _commandCursor;
         private GameObject _console;
         private ConsoleHandler _handler;
+
+        private readonly ConcurrentQueue<LogItem> _logQueue = new ConcurrentQueue<LogItem>();
 
         /// <summary>
         ///     The maximal number of messages that can be shown in the console.
@@ -71,6 +80,11 @@ namespace AlwaysTooLate.Console
 
         protected void Update()
         {
+            while (_logQueue.TryDequeue(out var log))      
+            {
+                if (_handler) _handler.AddLine(log.Text, log.Color);
+            }
+            
             if (Input.GetKeyDown(OpenConsoleKey)) SetConsoleActive(!IsConsoleOpen);
 
             if (IsConsoleOpen && _handler && _handler.IsEnteringCommand)
@@ -129,7 +143,14 @@ namespace AlwaysTooLate.Console
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
 
-            if(_handler) _handler.AddLine(condition, color);
+            condition = condition.Replace("\n", "");
+            condition = condition.Replace("\r", "");
+
+            _logQueue.Enqueue(new LogItem
+            {
+                Color = color,
+                Text = condition
+            });
         }
 
         /// <summary>
