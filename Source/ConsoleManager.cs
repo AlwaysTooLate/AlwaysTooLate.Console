@@ -26,7 +26,6 @@ namespace AlwaysTooLate.Console
             public string Text;
         }
         
-        public const string ConsolePrefabName = "AlwaysTooLate.Console";
         private readonly List<string> _highlights = new List<string>(32);
 
         private readonly List<string> _previousCommands = new List<string>(32);
@@ -53,6 +52,12 @@ namespace AlwaysTooLate.Console
         [Tooltip("The key that opens the console window.")]
         public KeyCode OpenConsoleKey = KeyCode.BackQuote;
 
+        /// <summary>
+        ///     The main console prefab. Assign it from the Prefabs directory. 
+        /// </summary>
+        [Tooltip("The main console prefab. Assign it from the Prefabs directory.")]
+        public GameObject ConsolePrefab;
+
         public UnityEvent OnConsoleShow;
         public UnityEvent OnConsoleHide;
 
@@ -62,11 +67,10 @@ namespace AlwaysTooLate.Console
         protected override void OnAwake()
         {
             // Load and spawn Console canvas
-            var consolePrefab = Resources.Load<GameObject>(ConsolePrefabName);
-            Debug.Assert(consolePrefab, $"Console prefab ({ConsolePrefabName}) not found!");
+            Debug.Assert(ConsolePrefab, "Console prefab is missing!");
             Debug.Assert(CommandManager.Instance,
                 "CommandManager instance is missing! CommandManager is required for console to work, please add it somewhere.");
-            _console = Instantiate(consolePrefab);
+            _console = Instantiate(ConsolePrefab);
             _handler = _console.GetComponent<ConsoleHandler>() ?? _console.GetComponentInChildren<ConsoleHandler>();
 
             // Do not destroy the console game object on scene change
