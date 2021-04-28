@@ -232,6 +232,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Navigation:
     m_Mode: 0
+    m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
@@ -972,6 +973,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Navigation:
     m_Mode: 3
+    m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
@@ -1484,6 +1486,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
 --- !u!114 &2101636376924208505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1568,6 +1571,9 @@ MonoBehaviour:
   HighlightsText: {fileID: 5617493586358304688}
   LinePrefab: {fileID: 3716640586855679032}
   LineHeight: 30
+  ScrollbarWidth: 20
+  MaxLines: 256
+  LimitLineCount: 1
   LineAColor: {r: 0.1764706, g: 0.1764706, b: 0.1764706, a: 0.78431374}
   LineBColor: {r: 0.21568628, g: 0.21568628, b: 0.21568628, a: 0.78431374}
 --- !u!1 &2298937395001081225
@@ -1797,6 +1803,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Navigation:
     m_Mode: 3
+    m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
@@ -2009,6 +2016,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Navigation:
     m_Mode: 0
+    m_WrapAround: 0
     m_SelectOnUp: {fileID: 0}
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
