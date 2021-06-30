@@ -118,7 +118,7 @@ namespace AlwaysTooLate.Console
 
             if (IsSelectingHighlight)
                 _handler.SelectHighlight(_commandCursor - _previousCommands.Count);
-            else
+            else if(_commandCursor >= 0 && _commandCursor < _previousCommands.Count)
                 // Select from history
                 _handler.CurrentCommand = _previousCommands[_commandCursor];
         }
