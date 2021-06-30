@@ -106,7 +106,7 @@ namespace AlwaysTooLate.Console
                 }
 
                 // Autocomplete
-                if (Input.GetKeyDown(KeyCode.Tab))
+                if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Space))
                     // Try to complete the current command
                     Autocomplete();
             }
