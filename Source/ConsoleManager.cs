@@ -26,7 +26,7 @@ namespace AlwaysTooLate.Console
             public string Text;
         }
         
-        private readonly List<string> _highlights = new List<string>(32);
+        private readonly List<(string, string)> _highlights = new List<(string, string)>(32);
 
         private readonly List<string> _previousCommands = new List<string>(32);
 
@@ -184,7 +184,7 @@ namespace AlwaysTooLate.Console
 
                 if (idx < _highlights.Count)
                 {
-                    _handler.CurrentCommand = _highlights[idx];
+                    _handler.CurrentCommand = _highlights[idx].Item1;
                     _handler.MoveCaretToEnd();
                 }
             }
@@ -223,7 +223,15 @@ namespace AlwaysTooLate.Console
                 if (!cmd.Name.Contains(command))
                     continue;
 
-                _highlights.Add(cmd.Name);
+                if (cmd.Parameters.Length > 0)
+                {
+                    var parameters = string.Join(", ", cmd.Parameters.Select(x => $"{x.Name}:{x.ParameterType.Name}").ToArray());
+                    _highlights.Add((cmd.Name, $"{cmd.Name} [{parameters}]"));
+                }
+                else
+                {
+                    _highlights.Add((cmd.Name, cmd.Name));
+                }
 
                 if (_highlights.Count == 32)
                     break;
@@ -238,7 +246,7 @@ namespace AlwaysTooLate.Console
                     if (!var.Key.Contains(command))
                         continue;
 
-                    _highlights.Add(var.Key);
+                    _highlights.Add((var.Key, var.Key));
 
                     if (_highlights.Count == 32)
                         break;
@@ -247,7 +255,7 @@ namespace AlwaysTooLate.Console
 
             _highlights.Sort();
 
-            _handler.SetHighlights(_highlights.ToArray(), command);
+            _handler.SetHighlights(_highlights.Select(x => x.Item2).ToArray(), command);
         }
 
         public void OnCommandEnter(string command)
