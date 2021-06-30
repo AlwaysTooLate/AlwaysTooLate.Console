@@ -147,9 +147,6 @@ namespace AlwaysTooLate.Console
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
 
-            condition = condition.Replace("\n", "");
-            condition = condition.Replace("\r", "");
-
             _logQueue.Enqueue(new LogItem
             {
                 Color = color,

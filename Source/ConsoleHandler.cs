@@ -173,6 +173,8 @@ namespace AlwaysTooLate.Console
 
             if (line == null) return;
 
+            text = text.Replace("\n", "").Replace("\r", "");
+
             line.RectTransform.SetParent(Content);
             line.RectTransform.anchoredPosition = new Vector2(0.0f, -_numLines * LineHeight);
             line.RectTransform.sizeDelta = new Vector2(Screen.width - ScrollbarWidth, LineHeight);
