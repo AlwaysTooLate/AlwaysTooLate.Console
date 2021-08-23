@@ -20,10 +20,18 @@ namespace AlwaysTooLate.Console
     [RequireComponent(typeof(CommandManager))] // Commands are mandatory
     public class ConsoleManager : BehaviourSingleton<ConsoleManager>
     {
-        private struct LogItem
+        private readonly struct LogItem
         {
-            public Color Color;
-            public string Text;
+            public readonly Color Color;
+            public readonly string Text;
+            public readonly string Stacktrace;
+
+            public LogItem(Color color, string text, string stacktrace)
+            {
+                Color = color;
+                Text = text;
+                Stacktrace = stacktrace;
+            }
         }
         
         private readonly List<(string, string)> _highlights = new List<(string, string)>(32);
@@ -147,11 +155,7 @@ namespace AlwaysTooLate.Console
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
 
-            _logQueue.Enqueue(new LogItem
-            {
-                Color = color,
-                Text = condition
-            });
+            _logQueue.Enqueue(new LogItem(color, condition, stacktrace));
         }
 
         /// <summary>
@@ -191,7 +195,7 @@ namespace AlwaysTooLate.Console
                     return;
 
                 var currentCommand = _handler.CurrentCommand;
-                var commands = CommandManager.GetCommands();
+                var commands = CommandManager.Commands;
 
                 foreach (var command in commands)
                     if (command.Name.StartsWith(currentCommand))
@@ -214,7 +218,7 @@ namespace AlwaysTooLate.Console
                 return;
             }
 
-            var commands = CommandManager.GetCommands();
+            var commands = CommandManager.Commands;
             foreach (var cmd in commands)
             {
                 if (!cmd.Name.Contains(command))

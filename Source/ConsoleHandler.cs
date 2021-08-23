@@ -75,16 +75,15 @@ namespace AlwaysTooLate.Console
         public void Open()
         {
             gameObject.SetActive(true);
-            gameObject.SetActive(true);
             SetHighlights(null);
             SetFocus();
         }
 
         public void Close()
         {
-            ClearCommand();
-            SetHighlights(null);
             gameObject.SetActive(false);
+            SetHighlights(null);
+            ClearCommand();
         }
 
         public void ClearCommand()
@@ -133,7 +132,7 @@ namespace AlwaysTooLate.Console
 
             HighlightsText.text = string.Empty;
 
-            if (highlights == null || highlights.Length == 0)
+            if (highlights is null || highlights.Length == 0)
             {
                 Highlights.gameObject.SetActive(false);
                 return;
@@ -141,23 +140,16 @@ namespace AlwaysTooLate.Console
 
             Highlights.gameObject.SetActive(true);
 
-            var highlightIndex = 0;
-            foreach (var highlight in highlights)
+            for(int i = 0; i < highlights.Length; i++)
             {
-                if (_selectedHighlight == highlightIndex)
-                {
-                    HighlightsText.text += $"<color=yellow>{highlight}</color>\n";
-                }
-                else
-                {
-                    var text = RichTextExtensions.ColorInnerString(highlight, markText, "green");
-                    HighlightsText.text += $"{text}\n";
-                }
-
-                highlightIndex++;
+                var highlight = highlights[i];
+                HighlightsText.text += _selectedHighlight == i
+                    ? $"<color=yellow>{highlight}</color>\n"
+                    : RichTextExtensions.ColorInnerString(highlight, markText, "green") + "\n";
             }
-
-            Highlights.sizeDelta = new Vector2(300.0f, 20.0f + highlights.Length * 18.0f);
+            var highlightsRect = HighlightsText.rectTransform;
+            var width = HighlightsText.preferredWidth + highlightsRect.offsetMin.x - highlightsRect.offsetMax.x;
+            Highlights.sizeDelta = new Vector2(width, 20.0f + highlights.Length * 18.0f);
         }
 
         public void AddLine(string text)
