@@ -154,10 +154,10 @@ namespace AlwaysTooLate.Console
 
         public void AddLine(string text)
         {
-            AddLine(text, Color.white);
+            AddLine(text, Color.white, null);
         }
 
-        public void AddLine(string text, Color color)
+        public void AddLine(string text, Color color, string clipboard)
         {
             if (_pool == null) return;
 
@@ -165,18 +165,21 @@ namespace AlwaysTooLate.Console
 
             if (line == null) return;
 
-            text = text.Replace("\n", "").Replace("\r", "");
+            line.Clipboard = clipboard;
 
+            text = text.Replace("\n", "").Replace("\r", "");
             line.RectTransform.SetParent(Content);
             line.RectTransform.anchoredPosition = new Vector2(0.0f, -_numLines * LineHeight);
-            line.RectTransform.sizeDelta = new Vector2(Screen.width - ScrollbarWidth, LineHeight);
+
+            //Getting lines to ajust line height
+            var lineCount = line.Text.GetTextInfo(text).lineCount;
+            line.RectTransform.sizeDelta = new Vector2(Screen.width - ScrollbarWidth, LineHeight * lineCount);
             line.Image.color = GetColorForCurrentLine();
             line.Text.text = text;
             line.Text.color = color;
-            
             _lines.Add(line);
-            _numLines++;
-            _totalLines++;
+            _numLines += lineCount;
+            _totalLines += lineCount;
 
             if (LimitLineCount && _lines.Count > MaxLines)
             {
@@ -219,7 +222,7 @@ namespace AlwaysTooLate.Console
             var screenWidth = Screen.width;
             foreach (var line in _lines)
             {
-                line.RectTransform.sizeDelta = new Vector2(screenWidth - ScrollbarWidth, LineHeight);
+                line.RectTransform.sizeDelta = new Vector2(screenWidth - ScrollbarWidth, LineHeight * line.Text.textInfo.lineCount);
             }
         }
 
@@ -229,7 +232,7 @@ namespace AlwaysTooLate.Console
             foreach (var line in _lines)
             {
                 line.RectTransform.anchoredPosition = new Vector2(0.0f, -_numLines * LineHeight);
-                _numLines++;
+                _numLines += line.Text.textInfo.lineCount;
             }
         }
 
