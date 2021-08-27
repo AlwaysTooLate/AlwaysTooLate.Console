@@ -154,10 +154,10 @@ namespace AlwaysTooLate.Console
 
         public void AddLine(string text)
         {
-            AddLine(text, Color.white);
+            AddLine(text, Color.white, null);
         }
 
-        public void AddLine(string text, Color color)
+        public void AddLine(string text, Color color, string clipboard)
         {
             if (_pool == null) return;
 
@@ -165,9 +165,13 @@ namespace AlwaysTooLate.Console
 
             if (line == null) return;
 
+            line.Clipboard = clipboard;
+
             text = text.Replace("\n", "").Replace("\r", "");
             line.RectTransform.SetParent(Content);
             line.RectTransform.anchoredPosition = new Vector2(0.0f, -_numLines * LineHeight);
+
+            //Getting lines to ajust line height
             var lineCount = line.Text.GetTextInfo(text).lineCount;
             line.RectTransform.sizeDelta = new Vector2(Screen.width - ScrollbarWidth, LineHeight * lineCount);
             line.Image.color = GetColorForCurrentLine();

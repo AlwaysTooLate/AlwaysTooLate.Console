@@ -94,7 +94,7 @@ namespace AlwaysTooLate.Console
         {
             while (_logQueue.TryDequeue(out var log))      
             {
-                if (_handler) _handler.AddLine(log.Text, log.Color);
+                if (_handler) _handler.AddLine(log.Text, log.Color, log.Stacktrace);
             }
             
             if (Input.GetKeyDown(OpenConsoleKey)) SetConsoleActive(!IsConsoleOpen);
@@ -174,7 +174,7 @@ namespace AlwaysTooLate.Console
         /// <param name="color">The text color.</param>
         public void Write(string text, Color color)
         {
-            if (_handler) _handler.AddLine(text, color);
+            if (_handler) _handler.AddLine(text, color, null);
         }
 
         public void Autocomplete()

@@ -7,12 +7,12 @@ using UnityEngine.EventSystems;
 
 namespace AlwaysTooLate.Console
 {
-    public class ConsoleLineHandle : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ConsoleLineHandle : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         public TMP_Text Text;
         public Image Image;
-        public Button Button;
         public RectTransform RectTransform;
+        public string Clipboard;
         private bool _isHighlighted;
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -29,6 +29,18 @@ namespace AlwaysTooLate.Console
                 return;
             Image.color /= 2f;
             _isHighlighted = false;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (string.IsNullOrWhiteSpace(Clipboard))
+                return;
+            var textEditor = new TextEditor
+            {
+                text = Clipboard
+            };
+            textEditor.SelectAll();
+            textEditor.Copy();
         }
     }
 }
