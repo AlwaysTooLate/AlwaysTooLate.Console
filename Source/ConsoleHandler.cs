@@ -218,21 +218,21 @@ namespace AlwaysTooLate.Console
 
         private void ResizeLines()
         {
-            var resize_lines = false;
+            var resizeLines = false;
 
             foreach (var line in _lines)
             {
                 var prevLineCount = line.Text.textInfo.lineCount;
-                line.RectTransform.sizeDelta = new Vector2(_screenWidth - ScrollbarWidth, 0f);
+                line.RectTransform.sizeDelta = new Vector2(_screenWidth - ScrollbarWidth, 0.0f);
                 var curLineCount = line.Text.GetTextInfo(line.Text.text).lineCount;
                 line.RectTransform.sizeDelta = new Vector2(_screenWidth - ScrollbarWidth, LineHeight * curLineCount);
                 if (prevLineCount == curLineCount)
                     continue;
                 _totalLines += curLineCount - prevLineCount;
-                resize_lines = true;
+                resizeLines = true;
             }
 
-            if (resize_lines)
+            if (resizeLines)
             {
                 PositionLines();
                 UpdateContentSize();
