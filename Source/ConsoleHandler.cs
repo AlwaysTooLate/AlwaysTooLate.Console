@@ -170,7 +170,7 @@ namespace AlwaysTooLate.Console
             text = text.Replace("\n", "").Replace("\r", "");
             line.RectTransform.SetParent(Content);
             line.RectTransform.anchoredPosition = new Vector2(0.0f, -_numLines * LineHeight);
-
+            line.RectTransform.sizeDelta = new Vector2(Screen.width - ScrollbarWidth, 0f);
             //Getting lines to ajust line height
             var lineCount = line.Text.GetTextInfo(text).lineCount;
             line.RectTransform.sizeDelta = new Vector2(Screen.width - ScrollbarWidth, LineHeight * lineCount);
@@ -211,18 +211,31 @@ namespace AlwaysTooLate.Console
             // This is required, because we're not relying on the Unity's layout system.
             if (_screenWidth != Screen.width)
             {
+                _screenWidth = Screen.width;
                 ResizeLines();
-                _screenWidth = Screen.width;
-                _screenWidth = Screen.width;
             }
         }
 
         private void ResizeLines()
         {
-            var screenWidth = Screen.width;
+            var resizeLines = false;
+
             foreach (var line in _lines)
             {
-                line.RectTransform.sizeDelta = new Vector2(screenWidth - ScrollbarWidth, LineHeight * line.Text.textInfo.lineCount);
+                var prevLineCount = line.Text.textInfo.lineCount;
+                line.RectTransform.sizeDelta = new Vector2(_screenWidth - ScrollbarWidth, 0.0f);
+                var curLineCount = line.Text.GetTextInfo(line.Text.text).lineCount;
+                line.RectTransform.sizeDelta = new Vector2(_screenWidth - ScrollbarWidth, LineHeight * curLineCount);
+                if (prevLineCount == curLineCount)
+                    continue;
+                _totalLines += curLineCount - prevLineCount;
+                resizeLines = true;
+            }
+
+            if (resizeLines)
+            {
+                PositionLines();
+                UpdateContentSize();
             }
         }
 
@@ -259,7 +272,7 @@ namespace AlwaysTooLate.Console
 
         private Color GetColorForCurrentLine()
         {
-            return _totalLines % 2 == 0 ? LineAColor : LineBColor;
+            return _lines.Count % 2 == 0 ? LineAColor : LineBColor;
         }
 
         private void ScrollToBottom()
