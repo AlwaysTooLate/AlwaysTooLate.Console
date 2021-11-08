@@ -61,6 +61,12 @@ namespace AlwaysTooLate.Console
         public KeyCode OpenConsoleKey = KeyCode.BackQuote;
 
         /// <summary>
+        ///     Update all lines when opening the console.
+        /// </summary>
+        [Tooltip("Update all lines when opening the console.")]
+        public bool UpdateOnOpenOnly = false;
+
+        /// <summary>
         ///     The main console prefab. Assign it from the Prefabs directory. 
         /// </summary>
         [Tooltip("The main console prefab. Assign it from the Prefabs directory.")]
@@ -92,12 +98,12 @@ namespace AlwaysTooLate.Console
 
         protected void Update()
         {
-            while (_logQueue.TryDequeue(out var log))      
-            {
-                if (_handler) _handler.AddLine(log.Text, log.Color, log.Stacktrace);
-            }
-            
-            if (Input.GetKeyDown(OpenConsoleKey)) SetConsoleActive(!IsConsoleOpen);
+            if((!UpdateOnOpenOnly || IsConsoleOpen) && _handler)
+                while (_logQueue.TryDequeue(out var log))      
+                    _handler.AddLine(log.Text, log.Color, log.Stacktrace);
+
+            if (Input.GetKeyDown(OpenConsoleKey)) 
+                SetConsoleActive(!IsConsoleOpen);
 
             if (IsConsoleOpen && _handler && _handler.IsEnteringCommand)
             {
