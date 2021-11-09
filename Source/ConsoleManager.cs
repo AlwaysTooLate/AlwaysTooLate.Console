@@ -160,7 +160,7 @@ namespace AlwaysTooLate.Console
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
-            if(_logQueue.Count > MaxMessages)
+            while (_logQueue.Count > MaxMessages)
                 _logQueue.TryDequeue(out _);
             _logQueue.Enqueue(new LogItem(color, condition, stacktrace));
         }
