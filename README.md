@@ -26,4 +26,4 @@ To open the console, press the OpenConsoleKey (BackQuote by default). The consol
 
 We do accept PR. Feel free to contribute. If you want to find us, look for the ATL staff on the official [AlwaysTooLate Discord Server](https://discord.alwaystoolate.com/)
 
-*AlwaysTooLate.Console (c) 2018-2020 Always Too Late.*
+*AlwaysTooLate.Console (c) 2018-2022 Always Too Late.*

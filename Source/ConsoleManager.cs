@@ -1,4 +1,4 @@
-﻿// AlwaysTooLate.Console (c) 2018-2020 Always Too Late.
+﻿// AlwaysTooLate.Console (c) 2018-2022 Always Too Late.
 
 using System;
 using System.Collections.Concurrent;
