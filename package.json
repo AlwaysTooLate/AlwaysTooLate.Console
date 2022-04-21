@@ -8,7 +8,7 @@
     "com.alwaystoolate.core": "1.1.0",
     "com.alwaystoolate.commands": "1.0.0",
     "com.alwaystoolate.cvars": "1.0.0",
-    "com.unity.textmeshpro": "3.0.1"
+    "com.unity.textmeshpro": "2.1.6"
   },
   "type": "library"
 }
