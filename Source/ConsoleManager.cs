@@ -1,4 +1,4 @@
-﻿// AlwaysTooLate.Console (c) 2018-2022 Always Too Late.
+// AlwaysTooLate.Console (c) 2018-2022 Always Too Late.
 
 using System;
 using System.Collections.Concurrent;
@@ -77,6 +77,7 @@ namespace AlwaysTooLate.Console
 
         public bool IsSelectingHighlight => _commandCursor >= _previousCommands.Count;
         public bool IsConsoleOpen { get; private set; }
+        public bool IsConsoleEnabled { get; set; }
 
         protected override void OnAwake()
         {
@@ -94,6 +95,8 @@ namespace AlwaysTooLate.Console
             Application.logMessageReceived += OnLog;
 
             CommandManager.RegisterCommand("clear", "Clears the console", _handler.ClearConsole);
+
+            IsConsoleEnabled = true;
         }
 
         protected void Update()
@@ -102,7 +105,7 @@ namespace AlwaysTooLate.Console
                 while (_logQueue.TryDequeue(out var log))      
                     _handler.AddLine(log.Text, log.Color, log.Stacktrace);
 
-            if (Input.GetKeyDown(OpenConsoleKey)) 
+            if (Input.GetKeyDown(OpenConsoleKey) && IsConsoleEnabled) 
                 SetConsoleActive(!IsConsoleOpen);
 
             if (IsConsoleOpen && _handler && _handler.IsEnteringCommand)
